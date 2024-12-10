@@ -1,14 +1,17 @@
+#!/usr/bin/env node
 /** write a function to get input of long string and conver it to paras.
- * para will be group of fixed set of sentences 
+ * para will be group of sentence count, count is passed as input 
+ * run command --> StringToPara <filename> <sentence per para>
   */
 
+var fs = require('fs');
 
 function StringToPara(stringData, options) {
     const defaultOption = 2
     let paras = []
 
     const sentencePerPara = !options ? defaultOption : options;
-
+    
     /* hold sentences in the array  */
     let rows = stringData.replace(/([.?!])\s*(?=[A-Z])/g, '$1|').split('|')
    // console.log('raw: ', rows);
@@ -16,7 +19,7 @@ function StringToPara(stringData, options) {
    /* create an array or arrays for each para  */
    let count = sentencePerPara
    while (count > 1){
-        rows.map(sentence => paras.push(rows.splice(0,defaultOption)));
+        rows.map(sentence => paras.push(rows.splice(0,sentencePerPara)));
         count--;
    }
    //console.log(paras);
@@ -25,11 +28,31 @@ function StringToPara(stringData, options) {
    if (sentencePerPara !== 1) {
         paras = paras.map(para => para.join(' '))
    } 
-   console.log(paras);
-
+   //console.log(paras);
+   return paras;
 }
 
+//read command arguments for file name & no of sentences per paragraph
+const args = process.argv.slice(2);
 
-str = 'The replace()  method in JavaScript is used for manipulating strings. It allows you to search for a specific part of a string, known as a substring? and replace it with another substring. This method returns a new string with the specified replacements and does not alter the original string. This functionality is particularly useful for tasks that require string modifications without affecting the original data.'
+var inpData = '';
 
-StringToPara(str, 2);
+var inputStream = fs.createReadStream(args[0]);     
+inputStream.setEncoding('utf-8');
+
+var writeStream = fs.createWriteStream('strOut.txt')
+
+inputStream.on('data', (chunk) => {
+     inpData += chunk;
+});
+
+inputStream.on('end', () => {
+     const outData = StringToPara(inpData, Number(args[1]));
+     console.log(outData.toString());
+     //writeStream.write(outData);
+     //writeStream.end();
+});
+
+inputStream.on('error', (err) => {
+     console.log(err);
+})
